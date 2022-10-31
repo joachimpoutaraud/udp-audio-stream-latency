@@ -1,7 +1,7 @@
 import socket
 import pyaudio, time, math, csv
 from threading import Thread
-from multiprocessing import Process, Queue
+from multiprocessing import Queue
 
 
 HEADER_SIZE = 4 + 8 # Packet index (4-bytes) and time (8-bytes)
@@ -134,7 +134,7 @@ class Client:
 
 if __name__ == "__main__":
 
-    client = Client(server_ip="127.0.0.1", sr=48000, buffer_size=1024, channels=2, running_time=5, verbose=False)
+    client = Client(server_ip="127.0.0.1", sr=48000, buffer_size=1024, channels=1, running_time=5, verbose=False)
 
     t1 = Thread(target=client.listen, args=())
     t2 = Thread(target=client.send, args=())
