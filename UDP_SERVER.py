@@ -8,9 +8,9 @@ HEADER_SIZE = 4 + 8 # Packet index (4-bytes) and time (8-bytes)
 
 class Server:
 
-    def __init__(self, server_port=30001, client_ip="127.0.0.1", client_port=30002, sr=48000, buffer_size=1024, bitres=16, channels=2):
+    def __init__(self, server_port=30001, client_ip="127.0.0.1", client_port=30002, sr=48000, buffer_size=256, bitres=16, channels=2, verbose=False, stream=False):
 
-        self.server_ip = "0.0.0.0" # socket.gethostbyname(socket.gethostname())
+        self.server_ip = "0.0.0.0" #socket.gethostbyname(socket.gethostname())
         self.server_port = server_port
         self.client_ip = client_ip
         self.client_port = client_port
@@ -19,6 +19,8 @@ class Server:
         self.buffer_size = buffer_size
         self.audio_buffer = int((bitres / 8) * channels * buffer_size)
         self.channels = channels
+        self.verbose = verbose
+        self.stream = stream
 
         self.UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.UDPServerSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
@@ -34,7 +36,6 @@ class Server:
 
         packet_rate = self.sr / self.buffer_size
         period = 1 / packet_rate
-        stream = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=self.channels, rate=self.sr, output=True, frames_per_buffer=self.buffer_size)
         
         print('Waiting for connection...', (self.server_ip, (self.server_port)))
 
@@ -54,7 +55,8 @@ class Server:
                 elif packet_index == 0:
                     break
                 else:
-                    self.record.write(frame[12:])
+                    if self.stream:
+                        self.record.write(frame[12:])
                     time.sleep(period)
                 i = 1
 
@@ -67,11 +69,14 @@ class Server:
         packet_rate = self.sr / self.buffer_size
         period = 1 / packet_rate
 
-
         def play(buffer_size, period):
             
             while True:
-                frame = self.play.read(buffer_size, exception_on_overflow=False) # Ignore overflow IOError
+                if self.stream:
+                    frame = self.play.read(buffer_size, exception_on_overflow=False) # Ignore overflow IOError
+                else:
+                    payload_size = self.audio_buffer - HEADER_SIZE
+                    frame = b''.join([b'\x00'] * (payload_size))
 
                 packet_index, time_diff = self.q.get()
                 index_bytes = packet_index.to_bytes(4, 'big')
@@ -80,7 +85,10 @@ class Server:
                 frame = index_bytes + time_bytes + frame
 
                 self.UDPServerSocket.sendto(frame, (self.client_ip, self.client_port))
-                time.sleep(period)      
+                time.sleep(period) 
+
+                if self.verbose:
+                    print(f'|  Server: {self.server_port}  |  Packet received from Client: {packet_index}  |  Packet send at time (ns): {current_time}  |')     
 
         t1 = Thread(target=play, args=(self.buffer_size, period))
         t1.start()      
@@ -88,10 +96,9 @@ class Server:
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=1024, channels=1)
+    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=False)
 
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())
     t1.start()
     t2.start()
-
