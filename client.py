@@ -35,18 +35,15 @@ class Client:
 
     def listen(self):
 
-        packet_rate = self.sr / self.buffer_size
-        period = 1 / packet_rate
-
         print('Waiting for connection...', (self.client_ip, (self.client_port)))
 
-        def record(audio_buffer, period):
+        def record():
 
             latency, i = 0, 0
 
             start_time = time.time_ns()
             while True:
-                frame, server_addr = self.UDPClientSocket.recvfrom(HEADER_SIZE + audio_buffer)
+                frame, server_addr = self.UDPClientSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
                 received_time = time.time_ns()
                 packet_index = int.from_bytes(frame[:4], 'big')
@@ -59,8 +56,6 @@ class Client:
                 else:
                     if self.stream:
                         self.record.write(frame[12:])
-
-                    time.sleep(period)
 
                     old_latency = latency
                     latency = round(((received_time - send_time) * 1e-9) / 2, 6) # convert to seconds
@@ -75,7 +70,7 @@ class Client:
 
             self.evaluate()
 
-        t1 = Thread(target=record, args=(self.audio_buffer, period))
+        t1 = Thread(target=record, args=())
         t1.start()
         
 
@@ -126,7 +121,7 @@ class Client:
         print('Average RTT latency: %f second' % latency_avg)
         print('Maximum RTT latency: %f second' % latency_max)
         print('Std RTT latency: %f second' % latency_std)
-        print('Bandwidth: %f Mbps' % ((self.sr / self.buffer_size) * bandwidth * 8 / 1024 / 1024))
+        print('Effective bandwidth: %f Mbps' % ((self.sr / self.buffer_size) * bandwidth * 8 / 1024 / 1024))
         print('Jitter: %f second' % jitter)
         print('Packet loss: %d' % int(packet_loss))
 

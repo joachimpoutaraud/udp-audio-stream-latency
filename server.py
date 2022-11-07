@@ -33,17 +33,14 @@ class Server:
 
 
     def listen(self):
-
-        packet_rate = self.sr / self.buffer_size
-        period = 1 / packet_rate
         
         print('Waiting for connection...', (self.server_ip, (self.server_port)))
 
-        def record(audio_buffer, period):
+        def record():
             
             i = 0
             while True:
-                frame, client_addr = self.UDPServerSocket.recvfrom(HEADER_SIZE + audio_buffer)
+                frame, client_addr = self.UDPServerSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
                 current_time = time.time_ns()
                 packet_index = int.from_bytes(frame[:4], 'big')
@@ -57,23 +54,19 @@ class Server:
                 else:
                     if self.stream:
                         self.record.write(frame[12:])
-                    time.sleep(period)
                 i = 1
 
-        t1 = Thread(target=record, args=(self.audio_buffer, period))
+        t1 = Thread(target=record, args=())
         t1.start()
         
 
     def send(self):
 
-        packet_rate = self.sr / self.buffer_size
-        period = 1 / packet_rate
-
-        def play(buffer_size, period):
+        def play():
             
             while True:
                 if self.stream:
-                    frame = self.play.read(buffer_size, exception_on_overflow=False) # Ignore overflow IOError
+                    frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
                 else:
                     payload_size = self.audio_buffer - HEADER_SIZE
                     frame = b''.join([b'\x00'] * (payload_size))
@@ -85,12 +78,11 @@ class Server:
                 frame = index_bytes + time_bytes + frame
 
                 self.UDPServerSocket.sendto(frame, (self.client_ip, self.client_port))
-                time.sleep(period) 
 
                 if self.verbose:
                     print(f'|  Server: {self.server_port}  |  Packet received from Client: {packet_index}  |  Packet send at time (ns): {current_time}  |')     
 
-        t1 = Thread(target=play, args=(self.buffer_size, period))
+        t1 = Thread(target=play, args=())
         t1.start()      
 
 
