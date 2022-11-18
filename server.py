@@ -8,9 +8,19 @@ HEADER_SIZE = 4 + 8 # Packet index (4-bytes) and time (8-bytes)
 
 class Server:
 
-    def __init__(self, server_port=30001, client_ip="127.0.0.1", client_port=30002, sr=48000, buffer_size=256, bitres=16, channels=2, verbose=False, stream=False):
+    def __init__(self, 
+                server_ip="0.0.0.0",
+                server_port=30001, 
+                client_ip="127.0.0.1", 
+                client_port=30002, 
+                sr=48000, 
+                buffer_size=256, 
+                bitres=16, 
+                channels=2, 
+                verbose=False, 
+                stream=False):
 
-        self.server_ip = "0.0.0.0" #socket.gethostbyname(socket.gethostname())
+        self.server_ip = server_ip #socket.gethostbyname(socket.gethostname())
         self.server_port = server_port
         self.client_ip = client_ip
         self.client_port = client_port
@@ -88,7 +98,7 @@ class Server:
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=False)
+    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=64, channels=2, stream=False, verbose=True)
 
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())
