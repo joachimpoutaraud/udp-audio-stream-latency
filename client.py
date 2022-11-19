@@ -5,7 +5,6 @@ from multiprocessing import Queue
 
 
 results = []
-log = []
 HEADER_SIZE = 4 + 8 # Packet index (4-bytes) and time (8-bytes)
 
 class Client:
@@ -54,6 +53,7 @@ class Client:
             latency, i = 0, 0
 
             while True:
+
                 frame, server_addr = self.UDPClientSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
                 received_time = time.time_ns()
@@ -86,7 +86,8 @@ class Client:
         
 
     def send(self):
-
+        
+        # packets = []
         packet_index = 1
 
         payload_size = self.audio_buffer - HEADER_SIZE
@@ -99,6 +100,7 @@ class Client:
         start_time = time.time_ns()
 
         while True:
+
             if self.stream:
                 frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
 
@@ -107,24 +109,27 @@ class Client:
             time_bytes = current_time.to_bytes(8, 'big')
             packet = index_bytes + time_bytes + frame
 
+            if (current_time - start_time) > self.running_time or packet_index >= total_packets:
+                break
+
+            self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
+            
+            # send_nums = self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
+            # packets.append([send_nums])
+
             packet_index += 1
 
-            try:
-                prac_period = (self.running_time - (current_time - start_time)) / (total_packets - len(log)) * (
-                len(log) / (packet_rate * (current_time - start_time) * 1e-9)) * 1e-9
-
-                prac_period = period if prac_period > period else prac_period
-
-                if (current_time - start_time) > self.running_time or packet_index >= total_packets:
-                    break
-
-                send_nums = self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
-                log.append([packet_index, current_time, send_nums])
+            # try:
+            #     prac_period = (self.running_time - (current_time - start_time)) / (total_packets - len(packets)) * (
+            #     len(packets) / (packet_rate * (current_time - start_time) * 1e-9)) * 1e-9
+            #     prac_period = period if prac_period > period else prac_period
                 
-            except ZeroDivisionError:
-                prac_period = 0                
+            # except ZeroDivisionError:
+            #     prac_period = (self.running_time - (current_time - start_time)) / (total_packets - len(packets)) * (
+            #     len(packets) / (packet_rate * (1) * 1e-9)) * 1e-9
+            #     prac_period = period if prac_period > period else prac_period              
 
-            time.sleep(prac_period)
+            time.sleep(period)
 
         packet_index = (0).to_bytes(4, 'big') 
         self.UDPClientSocket.sendto(packet_index, (self.server_ip, self.server_port)) 

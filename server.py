@@ -50,6 +50,7 @@ class Server:
             
             i = 0
             while True:
+
                 frame, client_addr = self.UDPServerSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
                 current_time = time.time_ns()
@@ -76,6 +77,7 @@ class Server:
         frame = b''.join([b'\x00'] * (payload_size))
         
         while True:
+
             if self.stream:
                 frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
 
