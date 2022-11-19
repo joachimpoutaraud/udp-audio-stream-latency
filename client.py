@@ -89,6 +89,9 @@ class Client:
 
         packet_index = 1
 
+        payload_size = self.audio_buffer - HEADER_SIZE
+        frame = b''.join([b'\x00'] * (payload_size))
+
         packet_rate = self.sr / self.buffer_size
         total_packets = packet_rate * (self.running_time * 1e-9)
         period = 1 / packet_rate
@@ -98,9 +101,6 @@ class Client:
         while True:
             if self.stream:
                 frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
-            else:
-                payload_size = self.audio_buffer - HEADER_SIZE
-                frame = b''.join([b'\x00'] * (payload_size))
 
             index_bytes = packet_index.to_bytes(4, 'big')
             current_time = time.time_ns()
@@ -160,7 +160,7 @@ class Client:
 
 if __name__ == "__main__":
 
-    client = Client(server_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=True, verbose=False, running_time=10)
+    client = Client(server_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=False, verbose=False, running_time=10)
 
     t1 = Thread(target=client.listen, args=())
     t2 = Thread(target=client.send, args=())

@@ -71,13 +71,13 @@ class Server:
         
 
     def send(self):
+
+        payload_size = self.audio_buffer - HEADER_SIZE
+        frame = b''.join([b'\x00'] * (payload_size))
         
         while True:
             if self.stream:
                 frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
-            else:
-                payload_size = self.audio_buffer - HEADER_SIZE
-                frame = b''.join([b'\x00'] * (payload_size))
 
             packet_index, time_diff = self.q.get()
             index_bytes = packet_index.to_bytes(4, 'big')
@@ -96,7 +96,7 @@ class Server:
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=True, verbose=False)
+    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=False, verbose=False)
 
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())
