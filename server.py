@@ -71,34 +71,32 @@ class Server:
         
 
     def send(self):
+        
+        while True:
+            if self.stream:
+                frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
+            else:
+                payload_size = self.audio_buffer - HEADER_SIZE
+                frame = b''.join([b'\x00'] * (payload_size))
 
-        def play():
-            
-            while True:
-                if self.stream:
-                    frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
-                else:
-                    payload_size = self.audio_buffer - HEADER_SIZE
-                    frame = b''.join([b'\x00'] * (payload_size))
+            packet_index, time_diff = self.q.get()
+            index_bytes = packet_index.to_bytes(4, 'big')
+            current_time = time.time_ns()
+            time_bytes = (current_time + time_diff).to_bytes(8, 'big')
+            packet = index_bytes + time_bytes + frame
 
-                packet_index, time_diff = self.q.get()
-                index_bytes = packet_index.to_bytes(4, 'big')
-                current_time = time.time_ns()
-                time_bytes = (current_time + time_diff).to_bytes(8, 'big')
-                frame = index_bytes + time_bytes + frame
+            self.UDPServerSocket.sendto(packet, (self.client_ip, self.client_port))
 
-                self.UDPServerSocket.sendto(frame, (self.client_ip, self.client_port))
+            if packet_index == 0:
+                break
 
-                if self.verbose:
-                    print(f'|  Server: {self.server_port}  |  Packet received from Client: {packet_index}  |  Packet send at time (ns): {current_time}  |')     
-
-        t1 = Thread(target=play, args=())
-        t1.start()      
+            if self.verbose:
+                print(f'|  Server: {self.server_port}  |  Packet received from Client: {packet_index}  |  Packet send at time (ns): {current_time}  |')         
 
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=64, channels=2, stream=False, verbose=True)
+    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=True, verbose=False)
 
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())

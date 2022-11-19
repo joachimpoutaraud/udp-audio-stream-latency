@@ -5,6 +5,7 @@ from multiprocessing import Queue
 
 
 results = []
+log = []
 HEADER_SIZE = 4 + 8 # Packet index (4-bytes) and time (8-bytes)
 
 class Client:
@@ -52,7 +53,6 @@ class Client:
 
             latency, i = 0, 0
 
-            start_time = time.time_ns()
             while True:
                 frame, server_addr = self.UDPClientSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
@@ -62,7 +62,7 @@ class Client:
 
                 if i == 0:
                     print('Connection from Peer!', server_addr)
-                if (received_time - start_time) > self.running_time:
+                if packet_index == 0:
                     break
                 else:
                     if self.stream:
@@ -87,33 +87,47 @@ class Client:
 
     def send(self):
 
+        packet_index = 1
+
         packet_rate = self.sr / self.buffer_size
+        total_packets = packet_rate * (self.running_time * 1e-9)
         period = 1 / packet_rate
 
-        def play(buffer_size, audio_buffer, period):
+        start_time = time.time_ns()
 
-            packet_index = 1
+        while True:
+            if self.stream:
+                frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
+            else:
+                payload_size = self.audio_buffer - HEADER_SIZE
+                frame = b''.join([b'\x00'] * (payload_size))
 
-            while True:
-                if self.stream:
-                    frame = self.play.read(buffer_size, exception_on_overflow=False) # Ignore overflow IOError
-                else:
-                    payload_size = audio_buffer - HEADER_SIZE
-                    frame = b''.join([b'\x00'] * (payload_size))
+            index_bytes = packet_index.to_bytes(4, 'big')
+            current_time = time.time_ns()
+            time_bytes = current_time.to_bytes(8, 'big')
+            packet = index_bytes + time_bytes + frame
 
-                index_bytes = packet_index.to_bytes(4, 'big')
-                current_time = time.time_ns()
-                time_bytes = current_time.to_bytes(8, 'big')
-                frame = index_bytes + time_bytes + frame
+            packet_index += 1
 
-                self.UDPClientSocket.sendto(frame, (self.server_ip, self.server_port))
+            try:
+                prac_period = (self.running_time - (current_time - start_time)) / (total_packets - len(log)) * (
+                len(log) / (packet_rate * (current_time - start_time) * 1e-9)) * 1e-9
 
-                time.sleep(period)  
-                packet_index += 1
+                prac_period = period if prac_period > period else prac_period
 
-        t1 = Thread(target=play, args=(self.buffer_size, self.audio_buffer, period))
-        t1.start()  
+                if (current_time - start_time) > self.running_time or packet_index >= total_packets:
+                    break
 
+                send_nums = self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
+                log.append([packet_index, current_time, send_nums])
+                
+            except ZeroDivisionError:
+                prac_period = 0                
+
+            time.sleep(prac_period)
+
+        packet_index = (0).to_bytes(4, 'big') 
+        self.UDPClientSocket.sendto(packet_index, (self.server_ip, self.server_port)) 
 
     def evaluate(self):
 
@@ -146,7 +160,7 @@ class Client:
 
 if __name__ == "__main__":
 
-    client = Client(server_ip="127.0.0.1", sr=48000, buffer_size=64, channels=2, stream=False, running_time=5)
+    client = Client(server_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=True, verbose=False, running_time=10)
 
     t1 = Thread(target=client.listen, args=())
     t2 = Thread(target=client.send, args=())
