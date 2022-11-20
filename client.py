@@ -1,7 +1,8 @@
 import socket
-import pyaudio, time, math, csv
+import time, math, csv
 from threading import Thread
 from multiprocessing import Queue
+import sounddevice as sd
 
 
 results = []
@@ -17,7 +18,8 @@ class Client:
                 sr=48000, 
                 buffer_size=256, 
                 bitres=16, 
-                channels=2, 
+                channels=2,
+                device=None, 
                 verbose=False, 
                 stream=False, 
                 running_time=10):
@@ -26,9 +28,17 @@ class Client:
         self.client_port = client_port
         self.server_ip = server_ip
         self.server_port = server_port
+
+        if device:
+            print(sd.query_devices())
+            print("\nSelect sound device:")
+            self.device = input()
+        else:
+            self.device = None
         
         self.sr = sr
         self.buffer_size = buffer_size
+        self.bitres = bitres
         self.audio_buffer = int((bitres / 8) * channels * buffer_size)
         self.channels = channels
         self.running_time = running_time * 1e9  # convert to nanoseconds
@@ -39,9 +49,6 @@ class Client:
         self.UDPClientSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
         self.UDPClientSocket.bind((self.client_ip, self.client_port))
 
-        self.record = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=self.channels, rate=self.sr, output=True, frames_per_buffer=self.buffer_size)
-        self.play = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=self.channels, rate=self.sr, input=True, frames_per_buffer=self.buffer_size)
-
         self.q = Queue()
 
     def listen(self):
@@ -51,6 +58,9 @@ class Client:
         def record():
 
             latency, i = 0, 0
+
+            stream = sd.RawOutputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+            stream.start()
 
             while True:
 
@@ -66,7 +76,7 @@ class Client:
                     break
                 else:
                     if self.stream:
-                        self.record.write(frame[12:])
+                        stream.write(frame[12:])
 
                     old_latency = latency
                     latency = round(((received_time - send_time) * 1e-9) / 2, 6) # convert to seconds
@@ -87,7 +97,6 @@ class Client:
 
     def send(self):
         
-        # packets = []
         packet_index = 1
 
         payload_size = self.audio_buffer - HEADER_SIZE
@@ -97,12 +106,15 @@ class Client:
         total_packets = packet_rate * (self.running_time * 1e-9)
         period = 1 / packet_rate
 
-        start_time = time.time_ns()
+        stream = sd.RawInputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+        stream.start()
 
+        start_time = time.time_ns()
+        
         while True:
 
             if self.stream:
-                frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
+                frame = stream.read(self.buffer_size)[0]
 
             index_bytes = packet_index.to_bytes(4, 'big')
             current_time = time.time_ns()
@@ -113,21 +125,8 @@ class Client:
                 break
 
             self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
-            
-            # send_nums = self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
-            # packets.append([send_nums])
 
-            packet_index += 1
-
-            # try:
-            #     prac_period = (self.running_time - (current_time - start_time)) / (total_packets - len(packets)) * (
-            #     len(packets) / (packet_rate * (current_time - start_time) * 1e-9)) * 1e-9
-            #     prac_period = period if prac_period > period else prac_period
-                
-            # except ZeroDivisionError:
-            #     prac_period = (self.running_time - (current_time - start_time)) / (total_packets - len(packets)) * (
-            #     len(packets) / (packet_rate * (1) * 1e-9)) * 1e-9
-            #     prac_period = period if prac_period > period else prac_period              
+            packet_index += 1            
 
             time.sleep(period)
 
@@ -165,7 +164,7 @@ class Client:
 
 if __name__ == "__main__":
 
-    client = Client(server_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=False, verbose=False, running_time=10)
+    client = Client(server_ip="127.0.0.1", sr=22050, buffer_size=256, channels=2, bitres=32, device=False, stream=True, verbose=False, running_time=10)
 
     t1 = Thread(target=client.listen, args=())
     t2 = Thread(target=client.send, args=())

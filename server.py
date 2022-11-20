@@ -1,7 +1,8 @@
 import socket
-import pyaudio, time
+import time
 from threading import Thread
 from multiprocessing import Queue
+import sounddevice as sd
 
 
 HEADER_SIZE = 4 + 8 # Packet index (4-bytes) and time (8-bytes)
@@ -16,17 +17,26 @@ class Server:
                 sr=48000, 
                 buffer_size=256, 
                 bitres=16, 
-                channels=2, 
+                channels=2,
+                device=None, 
                 verbose=False, 
                 stream=False):
 
-        self.server_ip = server_ip #socket.gethostbyname(socket.gethostname())
+        self.server_ip = server_ip # socket.gethostbyname(socket.gethostname())
         self.server_port = server_port
         self.client_ip = client_ip
         self.client_port = client_port
+
+        if device:
+            print(sd.query_devices())
+            print("\nSelect sound device:")
+            self.device = input()
+        else:
+            self.device = None
         
         self.sr = sr
         self.buffer_size = buffer_size
+        self.bitres = bitres
         self.audio_buffer = int((bitres / 8) * channels * buffer_size)
         self.channels = channels
         self.verbose = verbose
@@ -35,9 +45,6 @@ class Server:
         self.UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.UDPServerSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
         self.UDPServerSocket.bind((self.server_ip, self.server_port))
-
-        self.record = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=self.channels, rate=self.sr, output=True, frames_per_buffer=self.buffer_size)
-        self.play = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=self.channels, rate=self.sr, input=True, frames_per_buffer=self.buffer_size)
         
         self.q = Queue()
 
@@ -47,6 +54,9 @@ class Server:
         print('Waiting for connection...', (self.server_ip, (self.server_port)))
 
         def record():
+
+            stream = sd.RawOutputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+            stream.start()
             
             i = 0
             while True:
@@ -64,7 +74,7 @@ class Server:
                     break
                 else:
                     if self.stream:
-                        self.record.write(frame[12:])
+                        stream.write(frame[12:])
                 i = 1
 
         t1 = Thread(target=record, args=())
@@ -75,11 +85,14 @@ class Server:
 
         payload_size = self.audio_buffer - HEADER_SIZE
         frame = b''.join([b'\x00'] * (payload_size))
+
+        stream = sd.RawInputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+        stream.start()
         
         while True:
 
             if self.stream:
-                frame = self.play.read(self.buffer_size, exception_on_overflow=False) # Ignore overflow IOError
+                frame = stream.read(self.buffer_size)[0]
 
             packet_index, time_diff = self.q.get()
             index_bytes = packet_index.to_bytes(4, 'big')
@@ -93,13 +106,14 @@ class Server:
                 break
 
             if self.verbose:
-                print(f'|  Server: {self.server_port}  |  Packet received from Client: {packet_index}  |  Packet send at time (ns): {current_time}  |')         
+                print(f'|  Server: {self.server_port}  |  Packet received from Client: {packet_index}  |  Packet send at time (ns): {current_time}  |')   
+             
 
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=256, channels=2, stream=False, verbose=False)
-
+    server = Server(client_ip="127.0.0.1", sr=22050, buffer_size=256, channels=2, bitres=32, device=False, stream=True, verbose=False)
+    
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())
     t1.start()
