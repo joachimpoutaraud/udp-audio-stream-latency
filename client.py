@@ -19,9 +19,10 @@ class Client:
                 buffer_size=256, 
                 bitres=16, 
                 channels=2,
-                device=None, 
+                set_device=False, 
                 verbose=False, 
-                stream=False, 
+                stream=False,
+                save_csv=False, 
                 running_time=10):
 
         self.client_ip = client_ip # socket.gethostbyname(socket.gethostname())
@@ -29,7 +30,7 @@ class Client:
         self.server_ip = server_ip
         self.server_port = server_port
 
-        if device:
+        if set_device:
             print(sd.query_devices())
             print("\nSelect sound device:")
             self.device = input()
@@ -44,6 +45,7 @@ class Client:
         self.running_time = running_time * 1e9  # convert to nanoseconds
         self.verbose = verbose
         self.stream = stream
+        self.save_csv = save_csv
 		
         self.UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.UDPClientSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
@@ -59,7 +61,7 @@ class Client:
 
             latency, i = 0, 0
 
-            stream = sd.RawOutputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+            stream = sd.RawOutputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
             stream.start()
 
             while True:
@@ -97,26 +99,23 @@ class Client:
 
     def send(self):
         
-        packet_index = 1
-
         payload_size = self.audio_buffer - HEADER_SIZE
         frame = b''.join([b'\x00'] * (payload_size))
 
+        stream = sd.RawInputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+        stream.start()
+  
+        packet_index = 1
         packet_rate = self.sr / self.buffer_size
         total_packets = packet_rate * (self.running_time * 1e-9)
         period = 1 / packet_rate
-
-        stream = sd.RawInputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
-        stream.start()
 
         start_time = time.time_ns()
         
         while True:
 
             if self.stream:
-                frame = stream.read(self.buffer_size)[0]
-            else:
-                time.sleep(period)
+                frame = stream.read(self.buffer_size)[0]                
 
             index_bytes = packet_index.to_bytes(4, 'big')
             current_time = time.time_ns()
@@ -127,7 +126,10 @@ class Client:
                 break
 
             self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
-            packet_index += 1            
+            packet_index += 1  
+
+            if not self.stream:
+                time.sleep(period)            
 
         packet_index = (0).to_bytes(4, 'big') 
         self.UDPClientSocket.sendto(packet_index, (self.server_ip, self.server_port)) 
@@ -137,12 +139,12 @@ class Client:
         latency_list = [row[1] for row in results]
         latency_max = max(latency_list)
         latency_avg = sum(latency_list) / len(latency_list)
-        var = sum(pow(x - latency_avg, 2) for x in latency_list) / len(latency_list)
+        var = sum(pow(row - latency_avg, 2) for row in latency_list) / len(latency_list)
         latency_std = math.sqrt(var)
         jitter = max(latency_list) - min(latency_list)
         cycle = (results[-1][3] - results[0][3]) * 1e-9
-        bandwidth = sum([x[4] for x in results]) / cycle
-        packet_loss = (max([x[0] for x in results]) - len(latency_list)) 
+        bandwidth = sum([row[4] for row in results]) / cycle
+        packet_loss = (max([row[0] for row in results]) - len(latency_list)) 
 
         print('\n| ---------------  Summary  ----------------- |\n')
         print('Total %d packets are received in %f seconds' % (len(results), cycle))
@@ -153,17 +155,18 @@ class Client:
         print('Jitter: %f second' % jitter)
         print('Packet loss: %d' % int(packet_loss))
 
-        with open(f'results_{self.sr}_{self.buffer_size}_{self.channels}.csv', 'w') as f:
-            writer = csv.writer(f, delimiter=',')
-            content = [['packet-index', 'latency', 'jitter', 'received-time', 'packet-size', 'packet-rate']]
-            writer.writerows(content + results)
+        if self.save_csv:
+            with open(f'results_{self.sr}_{self.buffer_size}_{self.channels}.csv', 'w') as f:
+                writer = csv.writer(f, delimiter=',')
+                content = [['packet-index', 'latency', 'jitter', 'received-time', 'packet-size', 'packet-rate']]
+                writer.writerows(content + results)
 
         return {'Latency (avg)': latency_avg, 'Latency (max)': latency_max, 'Jitter': jitter, 'Bandwidth': bandwidth}
 
 
 if __name__ == "__main__":
 
-    client = Client(server_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=32, device=False, stream=True, verbose=False, running_time=10)
+    client = Client(server_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=16, set_device=False, stream=True, verbose=False, running_time=10)
 
     t1 = Thread(target=client.listen, args=())
     t2 = Thread(target=client.send, args=())

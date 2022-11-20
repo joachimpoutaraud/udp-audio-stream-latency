@@ -18,7 +18,7 @@ class Server:
                 buffer_size=256, 
                 bitres=16, 
                 channels=2,
-                device=None, 
+                set_device=False, 
                 verbose=False, 
                 stream=False):
 
@@ -27,7 +27,7 @@ class Server:
         self.client_ip = client_ip
         self.client_port = client_port
 
-        if device:
+        if set_device:
             print(sd.query_devices())
             print("\nSelect sound device:")
             self.device = input()
@@ -55,7 +55,7 @@ class Server:
 
         def record():
 
-            stream = sd.RawOutputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+            stream = sd.RawOutputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
             stream.start()
             
             i = 0
@@ -86,14 +86,14 @@ class Server:
         payload_size = self.audio_buffer - HEADER_SIZE
         frame = b''.join([b'\x00'] * (payload_size))
 
-        stream = sd.RawInputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+        stream = sd.RawInputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
         stream.start()
         
         while True:
 
             if self.stream:
-                frame = stream.read(self.buffer_size)[0]
-
+                frame = stream.read(self.buffer_size)[0]              
+            
             packet_index, time_diff = self.q.get()
             index_bytes = packet_index.to_bytes(4, 'big')
             current_time = time.time_ns()
@@ -112,7 +112,7 @@ class Server:
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=32, device=False, stream=True, verbose=False)
+    server = Server(client_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=16, set_device=False, stream=True, verbose=False)
     
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())
