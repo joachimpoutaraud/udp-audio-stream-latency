@@ -104,6 +104,7 @@ class Client:
 
         packet_rate = self.sr / self.buffer_size
         total_packets = packet_rate * (self.running_time * 1e-9)
+        period = 1 / packet_rate
 
         stream = sd.RawInputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
         stream.start()
@@ -114,6 +115,8 @@ class Client:
 
             if self.stream:
                 frame = stream.read(self.buffer_size)[0]
+            else:
+                time.sleep(period)
 
             index_bytes = packet_index.to_bytes(4, 'big')
             current_time = time.time_ns()
