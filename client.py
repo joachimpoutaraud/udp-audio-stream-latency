@@ -104,7 +104,6 @@ class Client:
 
         packet_rate = self.sr / self.buffer_size
         total_packets = packet_rate * (self.running_time * 1e-9)
-        period = 1 / packet_rate
 
         stream = sd.RawInputStream(samplerate=self.sr, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
         stream.start()
@@ -125,10 +124,7 @@ class Client:
                 break
 
             self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
-
             packet_index += 1            
-
-            time.sleep(period)
 
         packet_index = (0).to_bytes(4, 'big') 
         self.UDPClientSocket.sendto(packet_index, (self.server_ip, self.server_port)) 
@@ -164,7 +160,7 @@ class Client:
 
 if __name__ == "__main__":
 
-    client = Client(server_ip="127.0.0.1", sr=22050, buffer_size=256, channels=2, bitres=32, device=False, stream=True, verbose=False, running_time=10)
+    client = Client(server_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=32, device=False, stream=True, verbose=False, running_time=10)
 
     t1 = Thread(target=client.listen, args=())
     t2 = Thread(target=client.send, args=())

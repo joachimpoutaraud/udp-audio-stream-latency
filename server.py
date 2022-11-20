@@ -112,7 +112,7 @@ class Server:
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=22050, buffer_size=256, channels=2, bitres=32, device=False, stream=True, verbose=False)
+    server = Server(client_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=32, device=False, stream=True, verbose=False)
     
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())
