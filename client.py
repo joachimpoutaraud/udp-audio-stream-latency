@@ -24,6 +24,43 @@ class Client:
                 stream=False,
                 save_csv=False, 
                 running_time=10):
+        """
+        This script is based on the work of Copyright (c) 2021 Chuanyu Xue for measuring udp latency over the network. 
+        Contributions are related to streaming audio using sounddevice as well as defining udp packet size and rate in relation to audio stream requirements.
+
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+
+        Args:
+            client_ip (str, optional): Defines the client IP address to use. Defaults to "0.0.0.0".
+            client_port (int, optional): Defines the client port to use. Defaults to 30002.
+            server_ip (str, optional): Defines the server IP address to use. Defaults to "127.0.0.1".
+            server_port (int, optional): Defines the server port to use. Defaults to 30001.
+            sr (int, optional): Defines the sampling rate for streaming audio. Defaults to 48000.
+            buffer_size (int, optional): Defines the audio buffer size for streaming audio. Defaults to 256.
+            bitres (int, optional): Defines the bit resolution for streaming audio. Defaults to 16.
+            channels (int, optional): Defines the number of channels for streaming audio. Defaults to 2.
+            set_device (bool, optional): Whether to choose a specific audio device (e.g. JACK if installed on your machine) or not. Defaults to False.
+            verbose (bool, optional): Whether to print the latency measurements in real-time or not. Defaults to False.
+            stream (bool, optional): Whether to stream audio using your microphone and speaker or not. Defaults to False.
+            save_csv (bool, optional): Whether to save the udp latency measurements to a csv file or not. Defaults to False.
+            running_time (int, optional): Defines the time (in seconds) needed for the measurements. Defaults to 10.
+        """
 
         self.client_ip = client_ip # socket.gethostbyname(socket.gethostname())
         self.client_port = client_port
