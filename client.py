@@ -1,7 +1,5 @@
-import socket
-import time, math, csv
+import socket, time, math, csv
 from threading import Thread
-from multiprocessing import Queue
 import sounddevice as sd
 
 
@@ -88,50 +86,44 @@ class Client:
         self.UDPClientSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
         self.UDPClientSocket.bind((self.client_ip, self.client_port))
 
-        self.q = Queue()
 
     def listen(self):
 
         print('Waiting for connection...', (self.client_ip, (self.client_port)))
 
-        def record():
+        latency, i = 0, 0
 
-            latency, i = 0, 0
+        stream = sd.RawOutputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+        stream.start()
 
-            stream = sd.RawOutputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
-            stream.start()
+        while True:
 
-            while True:
+            frame, server_addr = self.UDPClientSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
-                frame, server_addr = self.UDPClientSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
+            received_time = time.time_ns()
+            packet_index = int.from_bytes(frame[:4], 'big')
+            send_time = int.from_bytes(frame[4:12], 'big')
 
-                received_time = time.time_ns()
-                packet_index = int.from_bytes(frame[:4], 'big')
-                send_time = int.from_bytes(frame[4:12], 'big')
+            if i == 0:
+                print('Connection from Peer!', server_addr)
+            if packet_index == 0:
+                break
+            else:
+                if self.stream:
+                    stream.write(frame[12:])
 
-                if i == 0:
-                    print('Connection from Peer!', server_addr)
-                if packet_index == 0:
-                    break
-                else:
-                    if self.stream:
-                        stream.write(frame[12:])
+                old_latency = latency
+                latency = round(((received_time - send_time) * 1e-9) / 2, 6) # convert to seconds
+                jitter = abs(latency - old_latency)
+                packet_size = len(frame)
 
-                    old_latency = latency
-                    latency = round(((received_time - send_time) * 1e-9) / 2, 6) # convert to seconds
-                    jitter = abs(latency - old_latency)
-                    packet_size = len(frame)
+                results.append([packet_index, latency, jitter, received_time, packet_size])
 
-                    results.append([packet_index, latency, jitter, received_time, packet_size])
+                if self.verbose:
+                    print(f'|  Packet index: {packet_index}  |  Latency (s): {latency} ｜ Jitter (s): {jitter}  |  Packet size (bytes): {packet_size}  |')
+            i = 1
 
-                    if self.verbose:
-                        print(f'|  Packet index: {packet_index}  |  Latency (s): {latency} ｜ Jitter (s): {jitter}  |  Packet size (bytes): {packet_size}  |')
-                i = 1
-
-            self.evaluate()
-
-        t1 = Thread(target=record, args=())
-        t1.start()
+        self.evaluate()
         
 
     def send(self):
@@ -170,6 +162,7 @@ class Client:
 
         packet_index = (0).to_bytes(4, 'big') 
         self.UDPClientSocket.sendto(packet_index, (self.server_ip, self.server_port)) 
+
 
     def evaluate(self):
 

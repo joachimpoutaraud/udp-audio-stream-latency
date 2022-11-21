@@ -1,5 +1,4 @@
-import socket
-import time
+import socket, time
 from threading import Thread
 from multiprocessing import Queue
 import sounddevice as sd
@@ -89,32 +88,27 @@ class Server:
         
         print('Waiting for connection...', (self.server_ip, (self.server_port)))
 
-        def record():
+        stream = sd.RawOutputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
+        stream.start()
+        
+        i = 0
+        while True:
 
-            stream = sd.RawOutputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
-            stream.start()
-            
-            i = 0
-            while True:
+            frame, client_addr = self.UDPServerSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
-                frame, client_addr = self.UDPServerSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
+            current_time = time.time_ns()
+            packet_index = int.from_bytes(frame[:4], 'big')
+            send_time = int.from_bytes(frame[4:12], 'big')
+            self.q.put((packet_index, send_time - current_time))
 
-                current_time = time.time_ns()
-                packet_index = int.from_bytes(frame[:4], 'big')
-                send_time = int.from_bytes(frame[4:12], 'big')
-                self.q.put((packet_index, send_time - current_time))
-
-                if i == 0:
-                    print('Connection from Peer!', client_addr)
-                elif packet_index == 0:
-                    break
-                else:
-                    if self.stream:
-                        stream.write(frame[12:])
-                i = 1
-
-        t1 = Thread(target=record, args=())
-        t1.start()
+            if i == 0:
+                print('Connection from Peer!', client_addr)
+            elif packet_index == 0:
+                break
+            else:
+                if self.stream:
+                    stream.write(frame[12:])
+            i = 1
         
 
     def send(self):
