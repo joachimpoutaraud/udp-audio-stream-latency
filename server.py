@@ -22,7 +22,7 @@ class Server:
                 verbose=False, 
                 stream=False):
 
-        self.server_ip = server_ip # socket.gethostbyname(socket.gethostname())
+        self.server_ip = server_ip # socket.gethostbyname(socket.gethostname()) 
         self.server_port = server_port
         self.client_ip = client_ip
         self.client_port = client_port
