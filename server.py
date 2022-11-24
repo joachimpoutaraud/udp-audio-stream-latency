@@ -18,8 +18,7 @@ class Server:
                 bitres=16, 
                 channels=2,
                 set_device=False, 
-                verbose=False, 
-                stream=False):
+                verbose=False):
 
         """
         This script is based on the work of Copyright (c) 2021 Chuanyu Xue for measuring udp latency over the network. 
@@ -54,7 +53,6 @@ class Server:
             channels (int, optional): Defines the number of channels for streaming audio. Defaults to 2.
             set_device (bool, optional): Whether to choose a specific audio device (e.g. JACK if installed on your machine) or not. Defaults to False.
             verbose (bool, optional): Whether to print the latency measurements in real-time or not. Defaults to False.
-            stream (bool, optional): Whether to stream audio using your microphone and speaker or not. Defaults to False.
         """
 
         self.server_ip = server_ip # socket.gethostbyname(socket.gethostname()) 
@@ -75,12 +73,12 @@ class Server:
         self.audio_buffer = int((bitres / 8) * channels * buffer_size)
         self.channels = channels
         self.verbose = verbose
-        self.stream = stream
 
         self.UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        # self.UDPServerSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
+        self.UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, HEADER_SIZE + self.audio_buffer)
+        self.UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, HEADER_SIZE + self.audio_buffer)
         self.UDPServerSocket.bind((self.server_ip, self.server_port))
-        
+
         self.q = Queue()
 
 
@@ -92,8 +90,8 @@ class Server:
         stream.start()
         
         i = 0
-        while True:
 
+        while True:
             frame, client_addr = self.UDPServerSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
             current_time = time.time_ns()
@@ -106,23 +104,21 @@ class Server:
             elif packet_index == 0:
                 break
             else:
-                if self.stream:
-                    stream.write(frame[12:])
+                stream.write(frame[12:]) 
+
             i = 1
         
 
     def send(self):
 
-        payload_size = self.audio_buffer - HEADER_SIZE
-        frame = b''.join([b'\x00'] * (payload_size))
+        # payload_size = self.audio_buffer - HEADER_SIZE
+        # frame = b''.join([b'\x00'] * (payload_size))
 
         stream = sd.RawInputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
         stream.start()
         
         while True:
-
-            if self.stream:
-                frame = stream.read(self.buffer_size)[0]              
+            frame = stream.read(self.buffer_size)[0]             
             
             packet_index, time_diff = self.q.get()
             index_bytes = packet_index.to_bytes(4, 'big')
@@ -142,7 +138,7 @@ class Server:
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=16, set_device=False, stream=True, verbose=False)
+    server = Server(client_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=16, set_device=False, verbose=False)
     
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())

@@ -19,7 +19,6 @@ class Client:
                 channels=2,
                 set_device=False, 
                 verbose=False, 
-                stream=False,
                 save_csv=False, 
                 running_time=10):
         """
@@ -55,7 +54,6 @@ class Client:
             channels (int, optional): Defines the number of channels for streaming audio. Defaults to 2.
             set_device (bool, optional): Whether to choose a specific audio device (e.g. JACK if installed on your machine) or not. Defaults to False.
             verbose (bool, optional): Whether to print the latency measurements in real-time or not. Defaults to False.
-            stream (bool, optional): Whether to stream audio using your microphone and speaker or not. Defaults to False.
             save_csv (bool, optional): Whether to save the udp latency measurements to a csv file or not. Defaults to False.
             running_time (int, optional): Defines the time (in seconds) needed for the measurements. Defaults to 10.
         """
@@ -79,13 +77,12 @@ class Client:
         self.channels = channels
         self.running_time = running_time * 1e9  # convert to nanoseconds
         self.verbose = verbose
-        self.stream = stream
         self.save_csv = save_csv
 		
         self.UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        # self.UDPClientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.audio_buffer)
+        self.UDPClientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, HEADER_SIZE + self.audio_buffer)
+        self.UDPClientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, HEADER_SIZE + self.audio_buffer)
         self.UDPClientSocket.bind((self.client_ip, self.client_port))
-
 
     def listen(self):
 
@@ -97,7 +94,6 @@ class Client:
         stream.start()
 
         while True:
-
             frame, server_addr = self.UDPClientSocket.recvfrom(HEADER_SIZE + self.audio_buffer)
 
             received_time = time.time_ns()
@@ -109,8 +105,7 @@ class Client:
             if packet_index == 0:
                 break
             else:
-                if self.stream:
-                    stream.write(frame[12:])
+                stream.write(frame[12:])
 
                 old_latency = latency
                 latency = round(((received_time - send_time) * 1e-9) / 2, 6) # convert to seconds
@@ -128,8 +123,8 @@ class Client:
 
     def send(self):
         
-        payload_size = self.audio_buffer - HEADER_SIZE
-        frame = b''.join([b'\x00'] * (payload_size))
+        # payload_size = self.audio_buffer - HEADER_SIZE
+        # frame = b''.join([b'\x00'] * (payload_size))
 
         stream = sd.RawInputStream(samplerate=self.sr, blocksize=self.buffer_size, device=self.device, channels=self.channels, dtype=f'int{str(self.bitres)}')
         stream.start()
@@ -137,14 +132,11 @@ class Client:
         packet_index = 1
         packet_rate = self.sr / self.buffer_size
         total_packets = packet_rate * (self.running_time * 1e-9)
-        period = 1 / packet_rate
 
         start_time = time.time_ns()
         
         while True:
-
-            if self.stream:
-                frame = stream.read(self.buffer_size)[0]                
+            frame = stream.read(self.buffer_size)[0]                
 
             index_bytes = packet_index.to_bytes(4, 'big')
             current_time = time.time_ns()
@@ -155,10 +147,7 @@ class Client:
                 break
 
             self.UDPClientSocket.sendto(packet, (self.server_ip, self.server_port))
-            packet_index += 1  
-
-            if not self.stream:
-                time.sleep(period)            
+            packet_index += 1             
 
         packet_index = (0).to_bytes(4, 'big') 
         self.UDPClientSocket.sendto(packet_index, (self.server_ip, self.server_port)) 
@@ -196,7 +185,7 @@ class Client:
 
 if __name__ == "__main__":
 
-    client = Client(server_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=16, set_device=False, stream=True, verbose=False, running_time=10)
+    client = Client(server_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=16, set_device=False, verbose=False, running_time=10)
 
     t1 = Thread(target=client.listen, args=())
     t2 = Thread(target=client.send, args=())
