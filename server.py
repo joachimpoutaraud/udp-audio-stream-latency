@@ -78,7 +78,7 @@ class Server:
         self.stream = stream
 
         self.UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.UDPServerSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
+        # self.UDPServerSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
         self.UDPServerSocket.bind((self.server_ip, self.server_port))
         
         self.q = Queue()

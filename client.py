@@ -83,7 +83,7 @@ class Client:
         self.save_csv = save_csv
 		
         self.UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.UDPClientSocket.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF, self.audio_buffer)
+        # self.UDPClientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.audio_buffer)
         self.UDPClientSocket.bind((self.client_ip, self.client_port))
 
 
