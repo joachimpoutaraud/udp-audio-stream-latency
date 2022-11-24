@@ -40,7 +40,7 @@ bitres=16
 channels=2
 ```
 
-You can also measure UDP latency with either real-time audio stream using your microphone and speakers (`stream=True`) or just by sending bytes packets equal to the size of the buffer required for the stream (`stream=False`). Finally, setting the parameter `save_csv=True` in the `client.py` will allow you to save all the latency measurements in a csv file.
+Finally, setting the parameter `save_csv=True` in the `client.py` will allow you to save all the latency measurements in a csv file.
 
 **Server**
 ```
