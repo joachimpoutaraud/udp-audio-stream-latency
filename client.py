@@ -80,8 +80,8 @@ class Client:
         self.save_csv = save_csv
 		
         self.UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.UDPClientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, HEADER_SIZE + self.audio_buffer)
-        self.UDPClientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, HEADER_SIZE + self.audio_buffer)
+        # self.UDPClientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, HEADER_SIZE + self.audio_buffer)
+        # self.UDPClientSocket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, HEADER_SIZE + self.audio_buffer)
         self.UDPClientSocket.bind((self.client_ip, self.client_port))
 
     def listen(self):
@@ -136,7 +136,7 @@ class Client:
         start_time = time.time_ns()
         
         while True:
-            frame = stream.read(self.buffer_size)[0]                
+            frame = stream.read(self.buffer_size)[0]               
 
             index_bytes = packet_index.to_bytes(4, 'big')
             current_time = time.time_ns()
@@ -185,7 +185,7 @@ class Client:
 
 if __name__ == "__main__":
 
-    client = Client(server_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=16, set_device=False, verbose=False, running_time=10)
+    client = Client(server_ip="127.0.0.1", sr=48000, buffer_size=256, channels=1, bitres=16, set_device=False, verbose=False, running_time=10)
 
     t1 = Thread(target=client.listen, args=())
     t2 = Thread(target=client.send, args=())

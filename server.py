@@ -75,8 +75,8 @@ class Server:
         self.verbose = verbose
 
         self.UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-        self.UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, HEADER_SIZE + self.audio_buffer)
-        self.UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, HEADER_SIZE + self.audio_buffer)
+        # self.UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, HEADER_SIZE + self.audio_buffer)
+        # self.UDPServerSocket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, HEADER_SIZE + self.audio_buffer)
         self.UDPServerSocket.bind((self.server_ip, self.server_port))
 
         self.q = Queue()
@@ -138,7 +138,7 @@ class Server:
 
 if __name__ == "__main__":
 
-    server = Server(client_ip="127.0.0.1", sr=44100, buffer_size=512, channels=2, bitres=16, set_device=False, verbose=False)
+    server = Server(client_ip="127.0.0.1", sr=48000, buffer_size=256, channels=1, bitres=16, set_device=False, verbose=False)
     
     t1 = Thread(target=server.listen, args=())
     t2 = Thread(target=server.send, args=())
