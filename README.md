@@ -49,6 +49,22 @@ python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --
 | --cp     | Defines the client port to use.                                                                                 | 30002         |
 | -d       | Whether to choose specific input/output devices or not (e.g. [1,3]). If set to True shows the device available. | None          |
 | -v       | Whether to print the latency measurements in real-time or not.                                                  | False         |
-| --save   | Whether to save the udp latency measurements to a csv file or not.                                              | True         |
+| --save   | Whether to save the udp latency measurements to a csv file or not.                                              | True          |
 | -t       | Defines the time (in seconds) needed for the measurements.                                                      | 10            |
+
+## Checking Available Hardware
+
+[sounddevice](https://pypi.org/project/sounddevice/) makes it possible to list each available device on one line together with the corresponding device ID, which can be assigned to stream audio. In order to display the list of available device set the argument `-d` to `True`. You can also directly specify input/output devices with a list (i.e. `-d [1, 3]`). Default parameters will use default input/output devices.
+
+**Example**
+```
+  0 Built-in Line Input, Core Audio (2 in, 0 out)
+> 1 Built-in Digital Input, Core Audio (2 in, 0 out)
+< 2 Built-in Output, Core Audio (0 in, 2 out)
+  3 Built-in Line Output, Core Audio (0 in, 2 out)
+  4 Built-in Digital Output, Core Audio (0 in, 2 out)
+
+Select input/output device index (e.g. 1, 3):
+```
+The first character of a line is `>` for the default input device, `<` for the default output device and `*` for the default input/output device. After the device ID and the device name, the corresponding host API name is displayed. In the end of each line, the maximum number of input and output channels is shown. More information [here](https://python-sounddevice.readthedocs.io/en/0.3.15/api/checking-hardware.html#sounddevice.query_devices)
 
