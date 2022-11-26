@@ -327,7 +327,7 @@ if __name__ == "__main__":
         opts.setdefault('--cp', "30002")
         opts.setdefault('-d', "None")
         opts.setdefault('-v', "False")
-        opts.setdefault('--save', "False")
+        opts.setdefault('--save', "True")
         opts.setdefault('-t', "10")
     
     except getopt.GetoptError:
