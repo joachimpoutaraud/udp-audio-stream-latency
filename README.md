@@ -34,8 +34,6 @@ python udpstream.py -s --ip <client ip> --sr <sampling rate> -b <buffer size> --
 python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --bit <bit resolution> --ch <channels> --sp <server port> --cp <client port> -d <bool or list> -v <bool> --save <save csv> -t <running time>
 ```
 
-Moreover, you can set the audio stream parameters to use for streaming audio over the network.
-
 ## Arguments
 
 | Argument | Description                                                                                                     | Default Value |
