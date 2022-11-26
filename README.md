@@ -23,11 +23,17 @@ pip install sounddevice
 
 ## Usage
 
-In order to connect to a peer, you need to specify the IP addresses and ports of the server and the client. 
+In order to establish a peer-to-peer connection, you can specify the following arguments in the command-line. 
 
+**Server**
 ```python
-udpstream.py -s --ip <client ip> --sr <sampling rate> -b <buffer size> --bit <bit resolution> --ch <channels> --sp <server port> --cp <client port> -d <bool or list> -v <bool>
+python udpstream.py -s --ip <client ip> --sr <sampling rate> -b <buffer size> --bit <bit resolution> --ch <channels> --sp <server port> --cp <client port> -d <bool or list> -v <bool>
 ```
+**Client**
+```python
+python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --bit <bit resolution> --ch <channels> --sp <server port> --cp <client port> -d <bool or list> -v <bool> --save <save csv> -t <running time>
+```
+
 Moreover, you can set the audio stream parameters to use for streaming audio over the network.
 
 ## Arguments
@@ -48,20 +54,3 @@ Moreover, you can set the audio stream parameters to use for streaming audio ove
 | --save   | Whether to save the udp latency measurements to a csv file or not.                                              | False         |
 | -t       | Defines the time (in seconds) needed for the measurements.                                                      | 10            |
 
-```python
-sr=48000 
-buffer_size=256
-bitres=16
-channels=2
-```
-
-Finally, setting the parameter `save_csv=True` in the `client.py` will allow you to save all the latency measurements in a csv file.
-
-**Server**
-```
-python server.py 
-```
-**Client**
-```
-python client.py 
-```
