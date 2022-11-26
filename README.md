@@ -40,15 +40,15 @@ python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --
 |----------|-----------------------------------------------------------------------------------------------------------------|---------------|
 | -s       | Server                                                                                                          | N/A           |
 | -c       | Client                                                                                                          | N/A           |
-| --ip     | Defines the remote IP address to connect to.                                                                           | "127.0.0.1"   |
+| --ip     | Defines the remote IP address to connect to.                                                                    | "127.0.0.1"   |
 | --sr     | Defines the sampling rate for streaming audio.                                                                  | 48000         |
 | -b       | Defines the audio buffer size for streaming audio.                                                              | 256           |
 | --bit    | Defines the bit resolution for streaming audio.                                                                 | 16            |
 | --ch     | Defines the number of channels for streaming audio.                                                             | 1             |
 | --sp     | Defines the server port to use.                                                                                 | 30001         |
 | --cp     | Defines the client port to use.                                                                                 | 30002         |
-| -d       | Whether to choose specific input/output devices or not (e.g. [1,3]). If set to True shows the device available. | None          |
-| -v       | Whether to print the latency measurements in real-time or not.                                                  | False         |
+| -d       | Whether to choose specific input/output devices or not (e.g. [1,3]). If set to True shows the devices available.| None          |
+| -v       | Whether to print the latency measurements in each iteration or not.                                             | False         |
 | --save   | Whether to save the udp latency measurements to a csv file or not.                                              | True          |
 | -t       | Defines the time (in seconds) needed for the measurements.                                                      | 10            |
 
