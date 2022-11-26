@@ -52,7 +52,7 @@ class Server:
             bitres (int, optional): Defines the bit resolution for streaming audio. Defaults to 16.
             channels (int, optional): Defines the number of channels for streaming audio. Defaults to 2.
             device (bool, optional): Whether to choose specific input/output devices or not (e.g. [1,3]). If set to True shows the device available. Defaults to None.
-            verbose (bool, optional): Whether to print the latency measurements in real-time or not. Defaults to False.
+            verbose (bool, optional): Whether to print the latency measurements in each iteration or not. Defaults to False.
         """
 
         self.server_ip = server_ip # socket.gethostbyname(socket.gethostname()) 
@@ -135,7 +135,6 @@ class Server:
             if self.verbose:
                 print(f'|  Server: {self.server_port}  |  Packet received from Client: {packet_index}  |  Packet send at time (ns): {current_time}  |') 
 
-
 class Client:
 
     def __init__(self, 
@@ -183,7 +182,7 @@ class Client:
             bitres (int, optional): Defines the bit resolution for streaming audio. Defaults to 16.
             channels (int, optional): Defines the number of channels for streaming audio. Defaults to 2.
             device (bool, optional): Whether to choose specific input/output device or not (e.g. [1,3]). If set to True shows the devices available. Defaults to None.
-            verbose (bool, optional): Whether to print the latency measurements in real-time or not. Defaults to False.
+            verbose (bool, optional): Whether to print the latency measurements in each iteration or not. Defaults to False.
             save_csv (bool, optional): Whether to save the udp latency measurements to a csv file or not. Defaults to False.
             running_time (int, optional): Defines the time (in seconds) needed for the measurements. Defaults to 10.
         """
@@ -313,7 +312,6 @@ class Client:
 
         return {'Latency (avg)': latency_avg, 'Latency (max)': latency_max, 'Jitter': jitter, 'Bandwidth': bandwidth}  
              
-
 if __name__ == "__main__":
 
     try:
