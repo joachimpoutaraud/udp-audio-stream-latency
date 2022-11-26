@@ -40,7 +40,7 @@ python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --
 |----------|-----------------------------------------------------------------------------------------------------------------|---------------|
 | -s       | Server                                                                                                          | N/A           |
 | -c       | Client                                                                                                          | N/A           |
-| --ip     | Defines the IP Address to connect to.                                                                           | "127.0.0.1"   |
+| --ip     | Defines the remote IP address to connect to.                                                                           | "127.0.0.1"   |
 | --sr     | Defines the sampling rate for streaming audio.                                                                  | 48000         |
 | -b       | Defines the audio buffer size for streaming audio.                                                              | 256           |
 | --bit    | Defines the bit resolution for streaming audio.                                                                 | 16            |
