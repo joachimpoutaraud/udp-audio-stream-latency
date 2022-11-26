@@ -49,6 +49,6 @@ python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --
 | --cp     | Defines the client port to use.                                                                                 | 30002         |
 | -d       | Whether to choose specific input/output devices or not (e.g. [1,3]). If set to True shows the device available. | None          |
 | -v       | Whether to print the latency measurements in real-time or not.                                                  | False         |
-| --save   | Whether to save the udp latency measurements to a csv file or not.                                              | False         |
+| --save   | Whether to save the udp latency measurements to a csv file or not.                                              | True         |
 | -t       | Defines the time (in seconds) needed for the measurements.                                                      | 10            |
 
