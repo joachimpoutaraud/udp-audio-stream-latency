@@ -54,7 +54,7 @@ python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --
 
 ## Checking Available Hardware
 
-[sounddevice](https://pypi.org/project/sounddevice/) makes it possible to list each available device on one line together with the corresponding device ID, which can be assigned to stream audio. In order to display the list of available device set the argument `-d` to `True`. You can also directly specify input/output devices with a list (i.e. `-d [1, 3]`). Default parameters will use default input/output devices.
+[sounddevice](https://pypi.org/project/sounddevice/) makes it possible to list each available device on one line together with the corresponding device ID, which can be assigned to stream audio. In order to display the list of available device set the argument `-d` to `True`. 
 
 **Example**
 ```
@@ -66,5 +66,7 @@ python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --
 
 Select input/output device index (e.g. 1, 3):
 ```
+You can also directly specify input/output devices in the command-line (i.e. `-d [1, 3]`). Default parameter will use the default input/output device.
+
 The first character of a line is `>` for the default input device, `<` for the default output device and `*` for the default input/output device. After the device ID and the device name, the corresponding host API name is displayed. In the end of each line, the maximum number of input and output channels is shown. More information [here](https://python-sounddevice.readthedocs.io/en/0.3.15/api/checking-hardware.html#sounddevice.query_devices)
 
