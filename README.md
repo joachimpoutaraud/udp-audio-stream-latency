@@ -23,13 +23,10 @@ pip install sounddevice
 
 ## Usage
 
-In order to connect to a peer, you first need to specify the IP addresses and ports of the server and the client in the python folder. 
+In order to connect to a peer, you need to specify the IP addresses and ports of the server and the client. 
 
 ```python
-server_ip="0.0.0.0"
-server_port=30001
-client_ip="127.0.0.1"
-client_port=30002
+udpstream.py -s --ip <client ip> --sr <sampling rate> -b <buffer size> --bit <bit resolution> --ch <channels> --sp <server port> --cp <client port> -d <bool or list> -v <bool>
 ```
 Moreover, you can set the audio stream parameters to use for streaming audio over the network.
 
