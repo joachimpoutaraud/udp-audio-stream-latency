@@ -66,7 +66,8 @@ python udpstream.py -c --ip <server ip> --sr <sampling rate> -b <buffer size> --
 
 Select input/output device index (e.g. 1, 3):
 ```
-You can also directly specify input/output devices in the command-line (i.e. `-d [1, 3]`). Default parameter will use the default input/output device.
 
-The first character of a line is `>` for the default input device, `<` for the default output device and `*` for the default input/output device. After the device ID and the device name, the corresponding host API name is displayed. In the end of each line, the maximum number of input and output channels is shown. More information [here](https://python-sounddevice.readthedocs.io/en/0.3.15/api/checking-hardware.html#sounddevice.query_devices)
+The first character of a line is `>` for the default input device, `<` for the default output device and `*` for the default input/output device. After the device ID and the device name, the corresponding host API name is displayed. In the end of each line, the maximum number of input and output channels is shown. More information [here](https://python-sounddevice.readthedocs.io/en/0.3.15/api/checking-hardware.html#sounddevice.query_devices).
+
+Finally, you can also specify input/output devices directly in the command-line using the `-d` argument and a list `[1, 3]`. Default parameter will use default input/output device.
 
