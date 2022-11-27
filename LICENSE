@@ -1,7 +1,9 @@
 MIT License
 
-This script is based on the work of Chuanyu Xue (Copyright (c) 2021) for measuring udp latency over the network. 
-Contributions are related to streaming audio using sounddevice as well as defining udp packet size and rate in relation to audio stream requirements.
+Copyright (c) Chuanyu Xue 2021 & Joachim Poutaraud 2022
+
+This license is reusing the work of Chuanyu Xue (2021) on udp latency measurements over the network. 
+Contributions are related to streaming audio using sounddevice and defining udp packet size and rate in relation to audio stream requirements.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
