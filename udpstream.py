@@ -1,3 +1,24 @@
+# This script is based on the work of Copyright (c) 2021 Chuanyu Xue for measuring udp latency over the network. 
+# Contributions are related to streaming audio using sounddevice as well as defining udp packet size and rate in relation to audio stream requirements.
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import socket, time, sys, getopt, math, csv
 from threading import Thread
 from multiprocessing import Queue
@@ -21,26 +42,7 @@ class Server:
                 verbose=False):
 
         """
-        This script is based on the work of Copyright (c) 2021 Chuanyu Xue for measuring udp latency over the network. 
-        Contributions are related to streaming audio using sounddevice as well as defining udp packet size and rate in relation to audio stream requirements.
-
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-        of this software and associated documentation files (the "Software"), to deal
-        in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-        copies of the Software, and to permit persons to whom the Software is
-        furnished to do so, subject to the following conditions:
-
-        The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
-
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-        SOFTWARE.
+        Server for streaming audio over the network.
 
         Args:
             server_ip (str, optional): Defines the server IP address to use. Defaults to "0.0.0.0".
@@ -151,26 +153,7 @@ class Client:
                 save_csv=False, 
                 running_time=10):
         """
-        This script is based on the work of Copyright (c) 2021 Chuanyu Xue for measuring udp latency over the network. 
-        Contributions are related to streaming audio using sounddevice as well as defining udp packet size and rate in relation to audio stream requirements.
-
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-        of this software and associated documentation files (the "Software"), to deal
-        in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-        copies of the Software, and to permit persons to whom the Software is
-        furnished to do so, subject to the following conditions:
-
-        The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
-
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-        SOFTWARE.
+        Client for streaming audio over the network.
 
         Args:
             client_ip (str, optional): Defines the client IP address to use. Defaults to "0.0.0.0".
@@ -295,7 +278,7 @@ class Client:
         bandwidth = sum([row[4] for row in results]) / cycle
         packet_loss = (max([row[0] for row in results]) - len(latency_list)) 
 
-        print('\n| ---------------  Summary  ----------------- |\n')
+        print('\n| ---------------  Measurements & Metrics  ----------------- |\n')
         print('Total %d packets are received in %f seconds' % (len(results), cycle))
         print('Average RTT latency: %f second' % latency_avg)
         print('Maximum RTT latency: %f second' % latency_max)
